@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  db_order:
+    image: postgres:15
+    container_name: db_order
+    environment:
+      - POSTGRES_DB=challengedb
+      - POSTGRES_USER=fiap
+      - POSTGRES_PASSWORD=fiapfiap
+    volumes:
+      - data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - project-network
+
+  web_order:
+    build: .
+    #image: deboraferrarids2/challenge_web:v7.0
+    image: deboraferrarids2/challenge_web:latest
+    container_name: app_order
+    volumes:
+      - .:/usr/src/app
+      - ./logs:/usr/src/app/logs
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db_order
+    networks:
+      - project-network
+    restart: always
+    #command: bash -c "sleep 10 && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:5000" 
+    command: bash -c "sleep 10 && python manage.py makemigrations && python manage.py migrate && python manage.py populate_products && python manage.py runserver 0.0.0.0:5000" 
+    #entrypoint: ["bash", "/usr/src/app/entrypoint.sh"]
+volumes:
+  data:
+
+networks:
+  project-network:
+    driver: bridge
+    ipam:
+      driver: default
