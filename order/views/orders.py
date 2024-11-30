@@ -14,6 +14,14 @@ from order.models.orders import OrderItems, Order
 from order.serializers.orders import *
 from order.use_cases.orders import ListOrdersUseCase
 
+import logging
+
+# Set up a logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+# You can configure a handler if necessary (e.g., FileHandler, StreamHandler)
+
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -76,21 +84,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     def checkout(self, request, pk=None):
         # Get the order object
         order = get_object_or_404(Order, pk=pk)
-        user = request.user
-
-        # Check if the user is authenticated
-        if user.is_authenticated:
-            if order.user != user:
-                return Response({'error': 'Você não tem permissão para visualizar esse carrinho'}, status=403)
-        else:
-            # Check session token if the user is not authenticated
-            session = request.query_params.get('session')
-            if order.session_token != session:
-                return Response({'error': 'Você não tem permissão para visualizar esse carrinho'}, status=403)
-
+       
         # Calculate total amount for the order
         total_amount = sum(item.product.amount * item.quantity for item in OrderItems.objects.filter(order=order))
-        
+        print(f"Total amount for order {order.id}: {total_amount}")
+
         # Payment data that needs to be sent to the payment microservice
         payment_data = {
             'order': order.id,
@@ -98,12 +96,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         }
 
         # Payment service URL (ensure this is correct for your microservice)
-        url = 'http://localhost:7000/transactions'
+        url = 'http://payment-app:7000/transactions/'
+        print(f"Sending payment data to URL: {url} with data: {payment_data}")
         
         try:
             # Convert payment data to JSON
             json_data = json.dumps(payment_data).encode('utf-8')
-
+            print( f'print 1')
             # Prepare the request
             req = urllib.request.Request(
                 url, 
@@ -111,10 +110,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 headers={'Content-Type': 'application/json'},
                 method='POST'
             )
-
+            print( f'print 2')
             # Send the request and capture the response
             with urllib.request.urlopen(req) as response:
                 response_data = response.read()
+                logger.debug(f"Response received: {response_data}")
+                
                 # Check if the payment was successful (200 OK)
                 if response.status == 200:
                     response_json = json.loads(response_data)
@@ -122,16 +123,20 @@ class OrderViewSet(viewsets.ModelViewSet):
                     return Response(response_json, status=200)
                 else:
                     # Handle failure, such as a non-200 status code from the payment service
+                    logger.error(f"Payment failed with status: {response.status}")
                     return Response({'error': 'Falha no pagamento'}, status=400)
 
         except HTTPError as e:
             # Handle HTTP errors (e.g., 4xx or 5xx)
+            logger.error(f"HTTPError occurred: {e.code}, {e.reason}")
             return Response({'error': f'HTTPError: {e.code}'}, status=500)
         except URLError as e:
             # Handle URL errors (e.g., network issues)
+            logger.error(f"URLError occurred: {e.reason}")
             return Response({'error': f'URLError: {e.reason}'}, status=500)
         except Exception as e:
             # Handle other unforeseen exceptions
+            logger.error(f"Unexpected error: {str(e)}")
             return Response({'error': f'Erro desconhecido: {str(e)}'}, status=500)
 
 

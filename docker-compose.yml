@@ -13,7 +13,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - project-network
+      - my_shared_network
 
   web_order:
     build: .
@@ -28,7 +28,7 @@ services:
     depends_on:
       - db_order
     networks:
-      - project-network
+      - my_shared_network
     restart: always
     #command: bash -c "sleep 10 && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:5000" 
     command: bash -c "sleep 10 && python manage.py makemigrations && python manage.py migrate && python manage.py populate_products && python manage.py runserver 0.0.0.0:5000" 
@@ -37,7 +37,5 @@ volumes:
   data:
 
 networks:
-  project-network:
-    driver: bridge
-    ipam:
-      driver: default
+  my_shared_network:
+    external: true
