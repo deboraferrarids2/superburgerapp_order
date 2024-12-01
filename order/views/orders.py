@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 import json
+from django.http import JsonResponse
 import urllib.request
 from urllib.error import URLError, HTTPError
 from rest_framework.permissions import AllowAny
@@ -171,6 +172,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], url_path='status', permission_classes=[AllowAny])
+    def status(self, request, pk=None):
+        try:
+            data = json.loads(request.body)
+            order = Order.objects.get(id=pk)
+            order.status = data['status']
+            order.save()
+            return JsonResponse({"message": "Order status updated successfully"}, status=200)
+        except Order.DoesNotExist:
+            return JsonResponse({"error": "Order not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':

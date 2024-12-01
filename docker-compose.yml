@@ -15,11 +15,11 @@ services:
     networks:
       - my_shared_network
 
-  web_order:
+  order-app:
     build: .
     #image: deboraferrarids2/challenge_web:v7.0
-    image: deboraferrarids2/challenge_web:latest
-    container_name: app_order
+    #image: deboraferrarids2/challenge_web:latest
+    container_name: order-app
     volumes:
       - .:/usr/src/app
       - ./logs:/usr/src/app/logs

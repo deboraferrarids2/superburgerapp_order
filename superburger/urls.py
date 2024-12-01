@@ -14,6 +14,7 @@ urlpatterns = [
     
     path('order/<int:pk>/cancel/', OrderViewSet.as_view({'post': 'cancel'}), name='order_cancel'),
     path('order/<int:pk>/checkout/', OrderViewSet.as_view({'post': 'checkout'}), name='order_checkout'),
+    path('order/<int:pk>/status/', OrderViewSet.as_view({'post': 'status'}), name='order_status'),
     
     # These custom paths below are unnecessary if you're using the default viewset behavior:
     # path('order_create/', OrderViewSet.create, name='order_create'),
