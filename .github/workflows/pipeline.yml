@@ -15,9 +15,9 @@ jobs:
         uses: actions/checkout@v2
 
       # Configura o Docker Compose e sobe os containers
-      - name: Set up Docker Compose
+      - name: Build Docker Image
         run: |
-          docker-compose -f docker-compose.yml up --build -d
+          docker-compose up --build
 
       # Aguarda os serviços estarem prontos
       - name: Wait for services to be ready
