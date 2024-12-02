@@ -20,6 +20,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
+      # Cria a rede externa
+      - name: Create Docker Network
+        run: |
+          docker network create my_shared_network || true
+
       # Configura o Docker Compose e sobe os containers
       - name: Set up Docker Compose
         run: |
