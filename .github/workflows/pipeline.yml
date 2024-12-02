@@ -61,7 +61,7 @@ jobs:
       # Adicionando os testes com cobertura
       - name: Run tests with coverage
         run: |
-          ccoverage run -m behave
+          coverage run -m behave
           
       - name: Show test coverage report
         run: |
