@@ -173,5 +173,5 @@ ALLOWED_HOSTS = ['172.18.0.2:50001', 'localhost', '127.0.0.1']
 # superburgerapp_order
 >>>>>>> da4661baf521a57592d3684bc10e512827d0e966
 
-
+coverage run -m behave
 coverage report --include="order/*"
