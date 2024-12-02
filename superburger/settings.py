@@ -74,17 +74,29 @@ WSGI_APPLICATION = 'superburger.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 import os
+import sys
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'challengedb',
-        'USER': 'fiap',
-        'PASSWORD': 'fiapfiap',
-        'HOST': 'db_order',
-        'PORT': '5432'
+if 'test' in sys.argv:  # Isso verifica se o comando `test` está sendo usado
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',  # Usa o SQLite em memória para testes
+        }
     }
-}
+
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'challengedb',
+            'USER': 'fiap',
+            'PASSWORD': 'fiapfiap',
+            'HOST': 'db_order',
+            'PORT': '5432'
+        }
+    }
+
+DJANGO_SETTINGS_MODULE = 'superburger.settings'
 
 
 

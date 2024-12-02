@@ -1,0 +1,10 @@
+[run]
+branch = True
+source = order  # Only include the 'order' app in coverage
+omit = 
+    */migrations/*  # Exclude migrations from coverage
+    */tests.py  # Exclude regular Django tests (you're using Behave)
+
+[report]
+show_missing = True
+skip_covered = True

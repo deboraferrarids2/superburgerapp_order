@@ -37,3 +37,35 @@ class ListOrdersUseCase:
         queryset = queryset.order_by('custom_order')
 
         return queryset
+
+
+class ListOrdersAdminUseCase:
+    def execute(self, request):
+        status = request.query_params.get('status', None)
+
+        # Query the Order model directly
+        queryset = Order.objects.all()
+
+        if status:
+            queryset = queryset.filter(status=status)
+       
+        # Apply custom ordering
+        queryset = self.apply_custom_ordering(queryset)
+
+        return queryset
+
+    def apply_custom_ordering(self, queryset):
+        queryset = queryset.annotate(
+            custom_order=Case(
+                When(status='pronto', then=Value(0)),
+                When(status='em preparacao', then=Value(1)),
+                When(status='recebido', then=Value(2)),
+                default=Value(3),  # Add default value for other statuses
+                output_field=IntegerField(),
+            )
+        ).filter(custom_order__lte=2)  # Keep only objects with status 0, 1, or 2
+        
+        # Order by custom_order
+        queryset = queryset.order_by('custom_order')
+
+        return queryset

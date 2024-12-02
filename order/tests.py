@@ -1,160 +1,131 @@
-# from django.contrib.auth import get_user_model
-# from django.test import TestCase
-# from django.test import RequestFactory
-# from rest_framework.test import APITestCase
-# from django.urls import reverse
-# from rest_framework.test import APIRequestFactory
-# from rest_framework import status
-# from rest_framework.test import APIClient
-# from .models import Order, Product, OrderItems
-# from .serializers import OrderSerializer
-# from user_auth.models import BaseUser, Cpf
-# from .views import OrderViewSet, OrderItemsViewSet
+from rest_framework.test import APITestCase
+from rest_framework import status
+from django.urls import reverse
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.models import User
+from order.models import Product, Order, OrderItems
 
-# import random
-# import string
 
-# User = get_user_model()
+class ProductViewSetTests(APITestCase):
+    def setUp(self):
+        # Create a user and authenticate
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
+        self.refresh = RefreshToken.for_user(self.user)
+        self.token = str(self.refresh.access_token)
 
-# class CreateOrderTests(APITestCase):
-#     def setUp(self):
+        # Set the URL for testing
+        self.product_url = reverse('product-list')  # Adjust to your URL pattern name
 
-#         self.user = self.get_or_create_user()
 
-#         # Generate a random suffix for the product name
-#         random_suffix = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    def test_list_products(self):
+        """Test listing all products"""
+        response = self.client.get(self.product_url, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)  # Check that two products are listed
+        self.assertEqual(response.data[0]['name'], self.product1.name)  # Ensure the correct product is listed
+        self.assertEqual(response.data[1]['name'], self.product2.name)
 
-#         # Create default products for testing
-#         self.default_product_1 = Product.objects.create(
-#             name=f'Default Product {random_suffix}',
-#             category='bebida',
-#             description=f'A default product for testing {random_suffix}',
-#             size='medio',
-#             amount=1000
-#         )
+    def test_get_product(self):
+        """Test getting a specific product"""
+        product_detail_url = reverse('product-detail', args=[self.product1.id])  # Adjust to your URL pattern name
+        response = self.client.get(product_detail_url, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], self.product1.name)  # Ensure correct product details are returned
 
-#         self.default_product_2 = Product.objects.create(
-#             name=f'Default Product {random_suffix}',
-#             category='bebida',
-#             description=f'A default product for testing {random_suffix}',
-#             size='medio',
-#             amount=2000 
-#         )
+class OrderViewSetTests(APITestCase):
+    def setUp(self):
+        # Create user and authenticate
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
+        self.refresh = RefreshToken.for_user(self.user)
+        self.token = str(self.refresh.access_token)
 
-#     def get_or_create_user(self):
-#         user_data = {
-#             'username': 'testuser',
-#             'password': 'testpassword',
-#             'email': f'testuser_{"".join(random.choices(string.ascii_lowercase, k=8))}@example.com',
-#         }
+        # Create products and an order
+        self.product = Product.objects.create(name="Burger", amount=10.00)
+        self.order = Order.objects.create(user=self.user, status='em aberto')
 
-#         response = self.client.post(reverse('user'), user_data, format='json')
-        
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Create order item
+        self.order_item = OrderItems.objects.create(order=self.order, product=self.product, quantity=2)
 
-#         user = User.objects.get(email=user_data['email'])
+        # Set the URL for testing
+        self.order_url = reverse('order-list')  # Adjust to your URL pattern name
+        self.order_detail_url = reverse('order-detail', args=[self.order.id])
 
-#         return user
+    def test_create_order(self):
+        """Test creating a new order"""
+        data = {
+            "cpf": "12345678901",
+            "status": "em aberto",
+        }
+        response = self.client.post(self.order_url, data, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Order.objects.count(), 2)  # Ensure an order is created
 
-#     def authenticate_user(self, user):
-#         response = self.client.post(reverse('signin'), {'email': user.email, 'password': 'testpassword'})
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         return response.data.get('access', '')
+    def test_cancel_order(self):
+        """Test cancelling an order"""
+        cancel_url = reverse('order-cancel', args=[self.order.id])  # Adjust to your URL pattern name
+        response = self.client.post(cancel_url, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.order.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.order.status, 'cancelado')
 
-#     def test_create_order_authenticated_with_null_cpf(self):
-#         user = self.get_or_create_user()
+    def test_checkout_order(self):
+        """Test checkout of an order"""
+        checkout_url = reverse('order-checkout', args=[self.order.id])  # Adjust to your URL pattern name
+        response = self.client.post(checkout_url, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-#         self.client = APIClient()
-#         self.client.force_authenticate(user=user)
-        
-#         # Create a Request object
-#         factory = APIRequestFactory()
-#         request = factory.post(reverse('order_create'), {'cpf': ''})
+    def test_update_order_status(self):
+        """Test updating order status"""
+        status_url = reverse('order-status', args=[self.order.id])  # Adjust to your URL pattern name
+        data = {"status": "finalizado"}
+        response = self.client.post(status_url, data, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.order.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.order.status, "finalizado")
 
-#         # Pass the Request object to the view set
-#         response = OrderViewSet.as_view({'post': 'create'})(request)
 
-        
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-#         self.assertEqual(Order.objects.count(), 1)
+class OrderItemsViewSetTests(APITestCase):
+    def setUp(self):
+        # Create user and authenticate
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
 
-#     def test_create_order_authenticated_with_non_null_cpf(self):
-#         user = self.get_or_create_user()
-#         self.client.force_authenticate(user=user)
+        # Create products and order
+        self.product = Product.objects.create(name="Fries", amount=5.00)
+        self.order = Order.objects.create(user=self.user, status="em aberto")
+        self.order_item = OrderItems.objects.create(order=self.order, product=self.product, quantity=1)
 
-#         # Create a Request object
-#         factory = APIRequestFactory()
-#         request = factory.post(reverse('order_create'))
-        
-#         # Pass the Request object to the view set
-#         response = OrderViewSet.as_view({'post': 'create'})(request)
+        # Set URLs for testing
+        self.order_item_url = reverse('orderitems-list')  # Adjust to your URL pattern name
+        self.order_item_detail_url = reverse('orderitems-detail', args=[self.order_item.id])
 
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    def test_create_order_item(self):
+        """Test creating an order item"""
+        data = {
+            "order": self.order.id,
+            "product": self.product.id,
+            "quantity": 2,
+        }
+        response = self.client.post(self.order_item_url, data, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(OrderItems.objects.count(), 2)
 
-#     def test_create_order_items_authenticated(self):
-#         user = self.get_or_create_user()
-        
-#         self.client = APIClient()
+    def test_delete_order_item(self):
+        """Test deleting an order item"""
+        response = self.client.delete(self.order_item_detail_url, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(OrderItems.objects.count(), 0)
 
-#         self.client.force_authenticate(user=user)
+    def test_update_order_item(self):
+        """Test updating an order item"""
+        data = {
+            "quantity": 3,
+        }
+        response = self.client.patch(self.order_item_detail_url, data, HTTP_AUTHORIZATION=f'Bearer {self.token}')
+        self.order_item.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.order_item.quantity, 3)
 
-#         # Create an order with order items
-#         order = Order.objects.create(user=user)
 
-#         # Create order items using a POST request to the 'items_create' endpoint
-#         factory = RequestFactory()
-#         request = factory.post(reverse('items_create'), {
-#             'order': order.id,
-#             'product': self.default_product_1.id,
-#             'quantity': 2,
-#             'changes': 'Sem sal'
-#         })
-#         response_item1 = OrderItemsViewSet.as_view({'post': 'create'})(request)
-
-#         request = factory.post(reverse('items_create'), {
-#             'order': order.id,
-#             'product': self.default_product_2.id,
-#             'quantity': 1,
-#             'changes': ''
-#         })
-#         response_item2 = OrderItemsViewSet.as_view({'post': 'create'})(request)
-
-#         self.assertEqual(response_item1.status_code, status.HTTP_201_CREATED)
-#         self.assertEqual(response_item2.status_code, status.HTTP_201_CREATED)
-
-#     def test_create_order_items_unauthenticated_with_session(self):
-#         # Create an order initially
-#         order = Order.objects.create()
-#         session_token = order.session_token
-
-#         # Create a RequestFactory instance
-#         request_factory = RequestFactory()
-
-#         # Create order items using a POST request to the 'items_create' endpoint
-#         request_item1 = request_factory.post(reverse('items_create'), {
-#             'order': order.id,
-#             'product': self.default_product_1.id,
-#             'quantity': 2,
-#             'changes': 'Sem sal'
-#         }, HTTP_SESSION_TOKEN=session_token)
-
-#         response_item1 = OrderItemsViewSet.as_view({'post': 'create'})(request_item1)
-
-#         request_item2 = request_factory.post(reverse('items_create'), {
-#             'order': order.id,
-#             'product': self.default_product_2.id,
-#             'quantity': 1,
-#             'changes': ''
-#         }, HTTP_SESSION_TOKEN=session_token)
-
-#         response_item2 = OrderItemsViewSet.as_view({'post': 'create'})(request_item2)
-
-#         # Check the responses for successful creation
-#         self.assertEqual(response_item1.status_code, status.HTTP_201_CREATED)
-#         self.assertEqual(response_item2.status_code, status.HTTP_201_CREATED)
-
-#         # Retrieve the order and check its details
-#         request_retrieve = request_factory.get(reverse('order_retrieve', args=[order.id]))
-#         response_retrieve = OrderViewSet.as_view({'get': 'retrieve'})(request_retrieve, pk=order.id)
-
-#         self.assertEqual(response_retrieve.status_code, status.HTTP_200_OK)
+if __name__ == '__main__':
+    import unittest
+    unittest.main()

@@ -6,7 +6,7 @@ from .products import Product
 
 class Order(models.Model):
     user = models.IntegerField(verbose_name='usuario', null=True, blank=True)
-    session_token = models.CharField(max_length=255, blank=True, null=True)
+    session_token = models.CharField(max_length=255, default='abc1')
     cpf = models.CharField(verbose_name="cpf", null=True, blank=True, max_length=11)
     status = models.CharField(max_length=20,verbose_name="status", choices=(("em aberto", "em aberto"), ("processando", "processando"), ("recebido", "recebido"), ('em preparacao','em preparacao'), ('pronto','pronto'), ('finalizado','finalizado'), ('cancelado','cancelado')), default='em aberto')
     created_at = models.DateTimeField(auto_now=True, verbose_name="criado em")

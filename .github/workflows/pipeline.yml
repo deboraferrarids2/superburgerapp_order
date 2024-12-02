@@ -1,0 +1,68 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx (fake)
+        run: echo "Docker Buildx setup - FAKED"
+
+      - name: Configure AWS Credentials (fake)
+        run: echo "AWS Credentials setup - FAKED"
+
+      - name: Install Docker Compose and JQ (fake)
+        run: echo "Docker Compose and JQ installation - FAKED"
+
+      - name: Log in to Amazon ECR (fake)
+        run: echo "Amazon ECR login - FAKED"
+
+      - name: Build Docker Image (fake)
+        run: echo "Docker Image build - FAKED"
+
+      - name: Tag Docker Image (fake)
+        run: echo "Docker Image tagging - FAKED"
+
+      - name: Push Docker Image to ECR (fake)
+        run: echo "Docker Image push to ECR - FAKED"
+
+      - name: Set up kubectl (fake)
+        run: echo "kubectl setup - FAKED"
+
+      - name: Configure kubeconfig (fake)
+        run: echo "Kubeconfig setup - FAKED"
+
+      - name: Check Kubernetes Context (fake)
+        run: echo "Kubernetes context check - FAKED"
+
+      - name: Validate connection to the cluster (fake)
+        run: echo "Kubernetes cluster connection validation - FAKED"
+
+      - name: Update Kubernetes Deployment with new image (fake)
+        run: echo "Kubernetes deployment update - FAKED"
+
+      - name: Wait for Deployment Rollout (fake)
+        run: echo "Kubernetes rollout status - FAKED"
+
+      # Adicionando a instalação de dependências
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Adicionando os testes com cobertura
+      - name: Run tests with coverage
+        run: |
+          ccoverage run -m behave
+          
+      - name: Show test coverage report
+        run: |
+          coverage report --include="order/*"

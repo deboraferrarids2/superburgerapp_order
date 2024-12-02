@@ -13,7 +13,7 @@ from rest_framework.exceptions import NotFound
 from django.contrib.sessions.backends.db import SessionStore
 from order.models.orders import OrderItems, Order
 from order.serializers.orders import *
-from order.use_cases.orders import ListOrdersUseCase
+from order.use_cases.orders import ListOrdersUseCase, ListOrdersAdminUseCase
 
 import logging
 
@@ -285,3 +285,23 @@ class OrderItemsViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     
+
+class OrderAdminViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderInlineItemsSerializer
+    
+    # Defina as permissões diretamente para as ações
+    permission_classes = [AllowAny]  # Permissão geral para todas as ações
+
+    serializer_action_classes = {
+        'list': OrderInlineItemsSerializer,
+    }
+    
+    def list(self, request, *args, **kwargs):
+        use_case = ListOrdersAdminUseCase()
+        orders = use_case.execute(request)
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data)
+    
+    def get_serializer_class(self):
+        return super().get_serializer_class()
