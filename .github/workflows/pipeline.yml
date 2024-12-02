@@ -14,15 +14,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # Configura o Docker Compose e sobe os containers
-      - name: Build Docker Image
+      # Instala o Docker Compose
+      - name: Install Docker Compose
         run: |
-          docker-compose up --build
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      # Configura o Docker Compose e sobe os containers
+      - name: Set up Docker Compose
+        run: |
+          docker-compose -f docker-compose.yml up --build -d
 
       # Aguarda os serviços estarem prontos
       - name: Wait for services to be ready
         run: |
-          sleep 15  # Aguarda o banco e a aplicação iniciarem
+          sleep 15
 
       # Instala as dependências para testes
       - name: Install dependencies
