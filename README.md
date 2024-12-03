@@ -7,6 +7,38 @@ O serviço utiliza um banco de dados PostgresQL para registro dos dados de Produ
 
 
 
+### EVIDENCIA COBERTURA DE TESTES
+
+https://drive.google.com/file/d/1zzp_ct2Kc5NnESJ59-zW-XIT2_mhplU8/view?usp=sharing
+
+
+### LINK SWAGGER
+
+Link para acesso ao swagger dos microserviços (insomnia json) https://drive.google.com/file/d/1JZSNdrp_vZI9XRROEOPhkTlDFBmln1kZ/view?usp=sharing
+
+
+
+_______________________________________________________________________
+
+### LINK VIDEO ENTREGA FASE 4
+
+Video:https://drive.google.com/file/d/1siLpfPdR3oZXvNZ2GNOtzjlU-CSyYZwS/view?usp=sharing
+
+
+**Até 2min: Item 1 do entregavel - Microserviços**
+- Explicação de como foram divididos os microserviços bem como visão geral de estrutura e de como eles interagem entre si.
+
+**02:02 a 04:30: Item 2 do entregável -  Testes**
+- Mostra os testes e report com coverage. MS Order aplicando BDD utilizando behave, app payment utilizando coverage e admin utilizando coverage + pytest
+
+**04:34 a 08:40 : Item 3 do entregável - Repositório e pipelines**
+- Mostra as regras de proteção da branch em cada repo, bem como as pipelines com check nos steps e evidencias de realização e report de testes na pipeline
+
+**08:44 até o final : Mostra os microserviços funcionando e interagindo entre si**, fazendo um fluo completo desde a criação do pedido, geração de qrcode de pagamento, atulização de status de pagamento, atualização do status do pedido e listagem de pedidos. 
+
+_______________________________________________________________________
+
+
 # Desenho da arquitetura do projeto
 
 Considerando as necessidades da empresa de criar um sistema de gestão de pedido que atenda a alguns requisitos de negócio mínimos, como a criação de usuários, início de criação de pedido com e sem login pelo usuário, adição/exclusao/edição de itens nos pedidos, checkout para pagamento e acompanhamento/atualização de status de pedidos, foi desenhada essa solução utilizando Docker para orquestração de containers e Kubernetes para escalabilidade conforme fluxo de acesso/demanda, contendo:
@@ -42,128 +74,13 @@ To build and run the project locally, follow these steps:
     ~sudo docker-compose up --build
 
 
-
-## for running using kubernets read the K8s README
-
-
-# Kubernetes Setup for superburger Project
-
-This README provides instructions to set up and manage the superburger project using Kubernetes.
+You can now access the application in your browser at http://localhost:5000
 
 ## Prerequisites
 
 - [Docker](https://www.docker.com/get-started)
-- [Kind (Kubernetes IN Docker)](https://kind.sigs.k8s.io/docs/user/quick-start/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
-## Setup
 
-### 1. Create a Kubernetes Cluster with Kind
-
-First, ensure Docker is running, then create a cluster using Kind:
-
-~ kind create cluster --name superburger-cluster
-
-
-### 2. Configure kubectl
-
-Make sure kubectl is configured to use the new cluster
-
-
-
-~ kubectl cluster-info --context kind-superburger-cluster
-
-
-### 3. Deploy the Application
-
-Navigate to the k8s directory where your Kubernetes configuration files are located and apply the configurations:
-
-
-
-~ kubectl apply -f k8s/
-
-This command applies all the configurations in the k8s directory.
-
-
-###  4. Verify the Deployment
-
-Check the status of your pods to ensure everything is running correctly:
-
-
-~ kubectl get pods
-
-You should see the pods for your application running. If not, wait for ready 2/2.
-
-
-*Migrations will apply be created and applyed automaticly
-
-
-### Accessing the Application
-
-To access the Django application, you need to forward the port from the Kubernetes cluster to your local machine. Use the following command to forward the port:
-
-
-~ kubectl port-forward svc/django-service 8080:80
-
-You can now access the application in your browser at http://localhost:5000.
-Stopping the Cluster
-
-
-### For logs
-
-~ kubectl logs <pod_name> -c app
-~ kubectl logs <pod_name> -c db
-
-To stop the Kind cluster without deleting it, you can stop the Docker containers:
-
-~ docker stop <container_id>
-
-Replace <container_id> with the ID of the Kind container, which you can find using:
-
-
-~ docker ps
-
-
-To restart the cluster, use:
-
-
-~ docker start <container_id>
-
-
-Deleting the Cluster
-
-If you want to delete the cluster, use the following command:
-
-
-~kind delete cluster --name superburger-cluster
-
-
-### Troubleshooting
-
-If needed delete a pod it is replaced 
-
-~ kubectl delete pod <nome-do-pod>
-
-
-Port Conflict
-
-If you encounter a port conflict (e.g., 5432 is already in use), you can:
-
-    Stop the PostgreSQL service on your local machine:
-
-    sudo systemctl stop postgresql
-
-    Change the port configuration in your docker-compose.yml or Kubernetes service definition.
-
-DisallowedHost Error
-
-If you encounter a DisallowedHost error, add the IP address to your Django ALLOWED_HOSTS setting in the settings.py file:
-
-python
-
-ALLOWED_HOSTS = ['172.18.0.2:50001', 'localhost', '127.0.0.1']
-
-
-### for testing
+### For testing
 coverage run -m behave
 coverage report --include="order/*"
